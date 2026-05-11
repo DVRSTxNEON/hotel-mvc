@@ -1,35 +1,35 @@
 <?php
-require_once "config/db.php";
+require_once __DIR__ . "/../config/db.php";
 
-class User{
+class User {
 
-private $db;
+    public function crear($nombre, $email, $password, $cedula) {
+        global $pdo;
+        $s = $pdo->prepare(
+            "INSERT INTO usuarios (nombre, email, password, cedula)
+             VALUES (?, ?, ?, ?)"
+        );
+        return $s->execute([$nombre, $email, $password, $cedula]);
+    }
 
-public function __construct(){
-    $this->db = DB::connect();
-}
+    public function existeEmail($email) {
+        global $pdo;
+        $s = $pdo->prepare("SELECT id FROM usuarios WHERE email = ?");
+        $s->execute([$email]);
+        return $s->fetch() !== false;
+    }
 
-public function existeEmail($email){
-    $q=$this->db->prepare("SELECT id FROM users WHERE email=?");
-    $q->execute([$email]);
-    return $q->fetch();
-}
+    public function existeCedula($cedula) {
+        global $pdo;
+        $s = $pdo->prepare("SELECT id FROM usuarios WHERE cedula = ?");
+        $s->execute([$cedula]);
+        return $s->fetch() !== false;
+    }
 
-public function crear($n,$e,$p,$c){
-    $q=$this->db->prepare("INSERT INTO users(nombre,email,password,cedula) VALUES(?,?,?,?)");
-    $q->execute([$n,$e,$p,$c]);
-}
-
-public function login($email){
-    $q=$this->db->prepare("SELECT * FROM users WHERE email=?");
-    $q->execute([$email]);
-    return $q->fetch(PDO::FETCH_ASSOC);
-}
-
-public function existeCedula($cedula){
-    $q = $this->db->prepare("SELECT id FROM users WHERE cedula=?");
-    $q->execute([$cedula]);
-    return $q->fetch();
-}
-
+    public function login($email) {
+        global $pdo;
+        $s = $pdo->prepare("SELECT * FROM usuarios WHERE email = ?");
+        $s->execute([$email]);
+        return $s->fetch(PDO::FETCH_ASSOC);
+    }
 }

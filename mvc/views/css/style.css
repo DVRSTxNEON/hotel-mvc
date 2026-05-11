@@ -1,77 +1,321 @@
-body{
-  margin:0;
-  font-family:'Segoe UI';
-  background:linear-gradient(135deg,#0a0a0a,#1a1a1a);
-  color:#fff;
+/* ── RESET & BASE ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f4f8;
+    color: #2d3748;
+    min-height: 100vh;
 }
 
-.auth-container{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
+a { text-decoration: none; color: inherit; }
+
+/* ── CONTAINER ───────────────────────────────────────────────────────────── */
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 16px;
 }
 
-.auth-box{
-  width:360px;
-  padding:30px;
-  border-radius:20px;
-  background:rgba(255,255,255,0.05);
-  backdrop-filter:blur(15px);
-  box-shadow:0 0 30px rgba(212,175,55,0.2);
-  text-align:center;
+/* ── CARD ────────────────────────────────────────────────────────────────── */
+.card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    padding: 28px 32px;
+    margin-bottom: 28px;
 }
 
-h1{ color:#d4af37; margin-top:0; }
-
-input{
-  width:100%;
-  padding:10px;
-  margin:10px 0;
-  border:none;
-  border-radius:10px;
-  background:#111;
-  color:white;
+.card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 10px;
 }
 
-button{
-  width:100%;
-  padding:12px;
-  background:#d4af37;
-  border:none;
-  border-radius:10px;
-  color:black;
-  font-weight:bold;
-  cursor:pointer;
+.card-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
 }
 
-.error{ color:#e74c3c; font-size:13px; }
-
-.rules p{ font-size:13px; margin:4px 0; }
-
-a{ color:#d4af37; text-decoration:none; }
-
-.toast{
-position:fixed;
-top:20px;
-right:20px;
-background:#d4af37;
-color:black;
-padding:15px 20px;
-border-radius:10px;
-box-shadow:0 0 15px rgba(0,0,0,0.5);
-opacity:0;
-transform:translateY(-20px);
-transition:.4s;
-z-index:999;
+.card-header-row h3 {
+    border: none;
+    margin: 0;
+    padding: 0;
 }
 
-.toast.show{
-opacity:1;
-transform:translateY(0);
+/* ── HEADER BAR ──────────────────────────────────────────────────────────── */
+.header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1e3a5f;
+    color: #fff;
+    border-radius: 12px;
+    padding: 16px 24px;
+    margin-bottom: 28px;
 }
 
-.toast.error{
-background:#e74c3c;
-color:white;
+.header-bar h2 { font-size: 1.15rem; font-weight: 600; }
+
+/* ── FORM ELEMENTS ───────────────────────────────────────────────────────── */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 6px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #cbd5e0;
+    border-radius: 8px;
+    font-size: .95rem;
+    background: #f7fafc;
+    transition: border-color .2s;
+    outline: none;
+}
+
+input:focus, select:focus {
+    border-color: #1e3a5f;
+    background: #fff;
+}
+
+.hint {
+    display: block;
+    font-size: .78rem;
+    color: #718096;
+    margin-top: 4px;
+}
+
+/* ── BOTONES ─────────────────────────────────────────────────────────────── */
+.btn-primary {
+    display: inline-block;
+    padding: 11px 28px;
+    background: #1e3a5f;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s, opacity .2s;
+    margin-top: 8px;
+}
+.btn-primary:hover  { background: #16304f; }
+.btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+.btn-secondary {
+    display: inline-block;
+    padding: 10px 22px;
+    background: #e2e8f0;
+    color: #2d3748;
+    border: none;
+    border-radius: 8px;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+    margin-bottom: 16px;
+}
+.btn-secondary:hover { background: #cbd5e0; }
+
+.btn-logout {
+    padding: 7px 18px;
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    border-radius: 6px;
+    font-size: .85rem;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,.3);
+    cursor: pointer;
+    transition: background .2s;
+}
+.btn-logout:hover { background: rgba(255,255,255,.25); }
+
+.btn-excel {
+    padding: 7px 16px;
+    background: #21a366;
+    color: #fff;
+    border-radius: 7px;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+}
+.btn-excel:hover { background: #1a8a54; }
+
+.btn-pdf {
+    display: inline-block;
+    padding: 5px 12px;
+    background: #e53e3e;
+    color: #fff;
+    border-radius: 6px;
+    font-size: .8rem;
+    font-weight: 600;
+    margin-right: 6px;
+    transition: background .2s;
+}
+.btn-pdf:hover { background: #c53030; }
+
+.btn-cancelar {
+    padding: 5px 12px;
+    background: #718096;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s;
+}
+.btn-cancelar:hover    { background: #4a5568; }
+.btn-cancelar:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ── HABITACIONES GRID ───────────────────────────────────────────────────── */
+.habitaciones-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+    min-height: 10px;
+}
+
+.hab-btn {
+    padding: 10px 18px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+}
+
+.hab-btn.disponible {
+    background: #f0fff4;
+    border-color: #48bb78;
+    color: #276749;
+}
+.hab-btn.disponible:hover {
+    background: #c6f6d5;
+}
+.hab-btn.disponible.seleccionada {
+    background: #276749;
+    color: #fff;
+    border-color: #276749;
+}
+
+.hab-btn.ocupado {
+    background: #fff5f5;
+    border-color: #fc8181;
+    color: #c53030;
+    cursor: not-allowed;
+    opacity: .65;
+}
+
+/* ── TABLA DE RESERVAS ───────────────────────────────────────────────────── */
+.tabla-reservas {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .9rem;
+}
+
+.tabla-reservas th {
+    background: #1e3a5f;
+    color: #fff;
+    padding: 11px 14px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.tabla-reservas td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.tabla-reservas tbody tr:hover { background: #f7fafc; }
+
+.td-acciones { white-space: nowrap; }
+
+/* ── LOGIN / REGISTER CENTRADO ───────────────────────────────────────────── */
+.container > h2 {
+    text-align: center;
+    font-size: 1.6rem;
+    color: #1e3a5f;
+    margin-bottom: 28px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+}
+
+.container > form {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+    padding: 32px;
+    max-width: 440px;
+    margin: 0 auto;
+}
+
+.container > form .btn-primary { width: 100%; text-align: center; }
+
+.form-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: .9rem;
+    color: #718096;
+}
+.form-link a { color: #1e3a5f; font-weight: 700; }
+.form-link a:hover { text-decoration: underline; }
+
+/* ── TOAST ───────────────────────────────────────────────────────────────── */
+#toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: .92rem;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity .3s, transform .3s;
+    z-index: 9999;
+    pointer-events: none;
+    max-width: 320px;
+}
+
+#toast.show         { opacity: 1; transform: translateY(0); }
+#toast.show.ok      { background: #276749; color: #fff; }
+#toast.show.error   { background: #c53030; color: #fff; }
+
+/* ── TEXTOS AUXILIARES ───────────────────────────────────────────────────── */
+.loading-text, .empty-text {
+    color: #a0aec0;
+    font-size: .9rem;
+    padding: 12px 0;
+    text-align: center;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .container { margin: 16px auto; }
+    .card { padding: 20px 16px; }
+    .tabla-reservas th, .tabla-reservas td { padding: 8px 8px; font-size: .8rem; }
+    .header-bar { flex-direction: column; gap: 10px; text-align: center; }
 }

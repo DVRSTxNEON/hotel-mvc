@@ -1,80 +1,105 @@
 <?php
 require_once "models/User.php";
 
-class UserController{
+class UserController {
 
-public function register(){
-
-    // VALIDACIONES
-
-    if(preg_match('/[0-9]/', $_POST['nombre'])){
-        setToast("El nombre no puede tener números","error");
-        header("Location:index.php?action=register");
+    private function res($status, $msg) {
+        header('Content-Type: application/json');
+        echo json_encode(["status" => $status, "msg" => $msg]);
         exit;
     }
 
-    if(!ctype_digit($_POST['cedula'])){
-        setToast("La cédula solo puede tener números","error");
-        header("Location:index.php?action=register");
+    // ── REGISTRO ─────────────────────────────────────────────────────────────
+    public function register() {
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return $this->res("error", "Acceso inválido");
+        }
+
+        if (!isset($_POST['nombre'], $_POST['email'], $_POST['password'], $_POST['cedula'])) {
+            return $this->res("error", "Faltan datos");
+        }
+
+        $n = trim($_POST['nombre']);
+        $e = trim($_POST['email']);
+        $p = $_POST['password'];
+        $c = trim($_POST['cedula']);
+
+        if ($n === "" || !preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$/u", $n)) {
+            return $this->res("error", "Nombre inválido (solo letras y espacios)");
+        }
+
+        if (!filter_var($e, FILTER_VALIDATE_EMAIL)) {
+            return $this->res("error", "Correo inválido");
+        }
+
+        if (!preg_match("/^[0-9]{6,15}$/", $c)) {
+            return $this->res("error", "Cédula inválida (solo números, 6 a 15 dígitos)");
+        }
+
+        if (
+            strlen($p) < 6              ||
+            !preg_match("/[A-Z]/", $p)  ||
+            !preg_match("/[a-z]/", $p)  ||
+            !preg_match("/[0-9]/", $p)  ||
+            !preg_match("/[\W_]/", $p)
+        ) {
+            return $this->res("error", "La contraseña debe tener al menos 6 caracteres, mayúscula, minúscula, número y carácter especial");
+        }
+
+        $user = new User();
+
+        if ($user->existeEmail($e)) {
+            return $this->res("error", "El correo ya está registrado");
+        }
+
+        if ($user->existeCedula($c)) {
+            return $this->res("error", "La cédula ya está registrada");
+        }
+
+        $user->crear($n, $e, password_hash($p, PASSWORD_DEFAULT), $c);
+
+        return $this->res("ok", "Registro exitoso");
+    }
+
+    // ── LOGIN ─────────────────────────────────────────────────────────────────
+    public function login() {
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return $this->res("error", "Acceso inválido");
+        }
+
+        if (!isset($_POST['email'], $_POST['password'])) {
+            return $this->res("error", "Faltan datos");
+        }
+
+        $e = trim($_POST['email']);
+        $p = $_POST['password'];
+
+        if (!filter_var($e, FILTER_VALIDATE_EMAIL)) {
+            return $this->res("error", "Correo inválido");
+        }
+
+        $user = (new User())->login($e);
+
+        if (!$user || !password_verify($p, $user['password'])) {
+            return $this->res("error", "Credenciales incorrectas");
+        }
+
+        $_SESSION['user'] = [
+            'id'     => $user['id'],
+            'nombre' => $user['nombre'],
+            'email'  => $user['email'],
+            'cedula' => $user['cedula'],
+        ];
+
+        return $this->res("ok", "Bienvenido");
+    }
+
+    // ── LOGOUT ────────────────────────────────────────────────────────────────
+    public function logout() {
+        session_destroy();
+        header("Location: index.php");
         exit;
     }
-
-    if(!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)){
-        setToast("Correo inválido","error");
-        header("Location:index.php?action=register");
-        exit;
-    }
-
-    $pass = $_POST['password'];
-
-    if(
-        strlen($pass) < 6 ||
-        !preg_match('/[A-Z]/',$pass) ||
-        !preg_match('/[a-z]/',$pass) ||
-        !preg_match('/[\W]/',$pass)
-    ){
-        setToast("Contraseña insegura","error");
-        header("Location:index.php?action=register");
-        exit;
-    }
-
-    $u = new User();
-
-    if($u->existeEmail($_POST['email'])){
-        setToast("El correo ya está registrado","error");
-        header("Location:index.php?action=register");
-        exit;
-    }
-
-    if($u->existeCedula($_POST['cedula'])){
-    setToast("La cédula ya está registrada","error");
-    header("Location:index.php?action=register");
-    exit;
-}
-
-    $u->crear(
-        $_POST['nombre'],
-        $_POST['email'],
-        password_hash($pass,PASSWORD_DEFAULT),
-        $_POST['cedula']
-    );
-
-    setToast("Cuenta creada correctamente");
-    header("Location:index.php");
-}
-
-public function login(){
-
-    $u = new User();
-    $user = $u->login($_POST['email']);
-
-    if($user && password_verify($_POST['password'],$user['password'])){
-        $_SESSION['user']=$user;
-        header("Location:index.php?action=dashboard");
-    }else{
-        setToast("Credenciales incorrectas","error");
-        header("Location:index.php");
-    }
-}
-
 }

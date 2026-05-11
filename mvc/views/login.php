@@ -1,45 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-<link rel="stylesheet" href="/hotel/mvc/views/css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Luxury - Iniciar Sesión</title>
+    <link rel="stylesheet" href="views/css/style.css">
 </head>
 <body>
 
-<div class="auth-container">
-<div class="auth-box">
+<div class="container">
 
-<h1>Hotel Luxury</h1>
+    <h2>Hotel Luxury</h2>
 
-<form method="POST" action="index.php?action=loginUser">
-<input name="email" type="email" placeholder="Correo" required>
-<input name="password" type="password" placeholder="Contraseña" required>
-<button>Ingresar</button>
-</form>
+    <form id="formLogin">
+        <div class="form-group">
+            <label>Correo electrónico</label>
+            <input type="email" name="email" placeholder="correo@ejemplo.com" required>
+        </div>
+        <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" name="password" placeholder="Contraseña" required>
+        </div>
 
-<p><a href="index.php?action=register">Crear cuenta</a></p>
+        <button type="submit" class="btn-primary">Ingresar</button>
+    </form>
+
+    <p class="form-link">
+        ¿No tienes cuenta? <a href="index.php?action=registerView">Crear cuenta</a>
+    </p>
 
 </div>
-</div>
 
-<?php if(isset($_SESSION['toast'])): ?>
-<div id="toast" class="toast <?= $_SESSION['toast']['type'] ?>">
-    <?= $_SESSION['toast']['msg'] ?>
-</div>
+<div id="toast"></div>
 
 <script>
-const t = document.getElementById("toast");
+document.getElementById('formLogin').addEventListener('submit', e => {
+    e.preventDefault();
 
-if(t){
-    setTimeout(()=>t.classList.add("show"),100);
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled    = true;
+    btn.textContent = 'Ingresando...';
 
-    setTimeout(()=>{
-        t.classList.remove("show");
-        setTimeout(()=>t.remove(),400);
-    },3000);
+    fetch('index.php?action=login', {
+        method: 'POST',
+        body: new FormData(e.target)
+    })
+    .then(r => r.json())
+    .then(res => {
+        showToast(res.msg, res.status);
+        if (res.status === 'ok') {
+            setTimeout(() => location.href = 'index.php?action=dashboard', 1500);
+        }
+    })
+    .catch(() => showToast('Error del servidor', 'error'))
+    .finally(() => {
+        btn.disabled    = false;
+        btn.textContent = 'Ingresar';
+    });
+});
+
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className   = 'show ' + type;
+    setTimeout(() => { t.className = ''; }, 3500);
 }
 </script>
-
-<?php unset($_SESSION['toast']); endif; ?>
 
 </body>
 </html>

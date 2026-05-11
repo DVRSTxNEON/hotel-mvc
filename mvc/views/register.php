@@ -1,57 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-<link rel="stylesheet" href="/hotel/mvc/views/css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Luxury - Crear Cuenta</title>
+    <link rel="stylesheet" href="views/css/style.css">
 </head>
 <body>
 
-<div class="auth-container">
-<div class="auth-box">
+<div class="container">
 
-<h1>Crear Cuenta</h1>
+    <h2>Crear Cuenta</h2>
 
-<form method="POST" action="index.php?action=registerUser">
+    <form id="formRegister">
+        <div class="form-group">
+            <label>Nombre completo</label>
+            <input type="text" name="nombre" placeholder="Nombre completo" required>
+        </div>
+        <div class="form-group">
+            <label>Cédula</label>
+            <input type="text" name="cedula" placeholder="Número de cédula" required>
+        </div>
+        <div class="form-group">
+            <label>Correo electrónico</label>
+            <input type="email" name="email" placeholder="correo@ejemplo.com" required>
+        </div>
+        <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" name="password" id="password" placeholder="Contraseña" required>
+            <small class="hint">Mínimo 6 caracteres, mayúscula, minúscula, número y carácter especial.</small>
+        </div>
 
-<input name="nombre" placeholder="Nombre" required>
-<input name="cedula" placeholder="Cédula" required>
-<input name="email" type="email" placeholder="Correo" required>
-<input name="password" type="password" placeholder="Contraseña" required>
+        <button type="submit" class="btn-primary">Registrarse</button>
+    </form>
 
-<div class="rules">
-<p>• Mínimo 6 caracteres</p>
-<p>• Una mayúscula</p>
-<p>• Una minúscula</p>
-<p>• Un carácter especial</p>
+    <p class="form-link">
+        ¿Ya tienes cuenta? <a href="index.php">Iniciar sesión</a>
+    </p>
+
 </div>
 
-<button>Registrarse</button>
-
-</form>
-
-<p><a href="index.php">Iniciar sesión</a></p>
-
-</div>
-</div>
-
-<?php if(isset($_SESSION['toast'])): ?>
-<div id="toast" class="toast <?= $_SESSION['toast']['type'] ?>">
-    <?= $_SESSION['toast']['msg'] ?>
-</div>
+<div id="toast"></div>
 
 <script>
-const t = document.getElementById("toast");
+document.getElementById('formRegister').addEventListener('submit', e => {
+    e.preventDefault();
 
-if(t){
-    setTimeout(()=>t.classList.add("show"),100);
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled    = true;
+    btn.textContent = 'Registrando...';
 
-    setTimeout(()=>{
-        t.classList.remove("show");
-        setTimeout(()=>t.remove(),400);
-    },3000);
+    fetch('index.php?action=register', {
+        method: 'POST',
+        body: new FormData(e.target)
+    })
+    .then(res => res.json())
+    .then(data => {
+        showToast(data.msg, data.status);
+        if (data.status === 'ok') {
+            setTimeout(() => location.href = 'index.php', 1500);
+        }
+    })
+    .catch(() => showToast('Error del servidor', 'error'))
+    .finally(() => {
+        btn.disabled    = false;
+        btn.textContent = 'Registrarse';
+    });
+});
+
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className   = 'show ' + type;
+    setTimeout(() => { t.className = ''; }, 3500);
 }
 </script>
-
-<?php unset($_SESSION['toast']); endif; ?>
 
 </body>
 </html>
