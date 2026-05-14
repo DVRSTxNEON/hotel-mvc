@@ -13,6 +13,17 @@ class Reserva {
         return $s->execute([$usuario_id, $habitacion, $fecha_inicio, $fecha_fin]);
     }
 
+    // ── ACTUALIZAR ────────────────────────────────────────────────────────────
+    public function actualizar($id, $usuario_id, $habitacion, $fecha_inicio, $fecha_fin) {
+        global $pdo;
+        $s = $pdo->prepare(
+            "UPDATE reservas
+             SET habitacion = ?, fecha_inicio = ?, fecha_fin = ?
+             WHERE id = ? AND usuario_id = ?"
+        );
+        return $s->execute([$habitacion, $fecha_inicio, $fecha_fin, $id, $usuario_id]);
+    }
+
     // ── LISTAR por usuario ────────────────────────────────────────────────────
     public function listar($usuario_id) {
         global $pdo;
@@ -46,15 +57,24 @@ class Reserva {
     }
 
     // ── VERIFICAR DISPONIBILIDAD ──────────────────────────────────────────────
-    public function estaDisponible($habitacion, $fecha_inicio, $fecha_fin) {
+    // $excluirId permite ignorar la reserva actual al editar
+    public function estaDisponible($habitacion, $fecha_inicio, $fecha_fin, $excluirId = null) {
         global $pdo;
-        $s = $pdo->prepare(
-            "SELECT COUNT(*) FROM reservas
-             WHERE habitacion = ?
-               AND fecha_inicio < ?
-               AND fecha_fin   > ?"
-        );
-        $s->execute([$habitacion, $fecha_fin, $fecha_inicio]);
+
+        $sql = "SELECT COUNT(*) FROM reservas
+                WHERE habitacion = ?
+                  AND fecha_inicio < ?
+                  AND fecha_fin   > ?";
+
+        $params = [$habitacion, $fecha_fin, $fecha_inicio];
+
+        if ($excluirId !== null) {
+            $sql     .= " AND id != ?";
+            $params[] = $excluirId;
+        }
+
+        $s = $pdo->prepare($sql);
+        $s->execute($params);
         return $s->fetchColumn() == 0;
     }
 
@@ -67,7 +87,7 @@ class Reserva {
     }
 
     // ── ESTADO DE HABITACIONES ────────────────────────────────────────────────
-    public function estadoHabitaciones($clase, $ini, $fin) {
+    public function estadoHabitaciones($clase, $ini, $fin, $excluirId = null) {
         global $pdo;
 
         $sql = "
@@ -78,12 +98,17 @@ class Reserva {
                 ON h.numero = r.habitacion
                AND r.fecha_inicio < ?
                AND r.fecha_fin   > ?
+               " . ($excluirId !== null ? "AND r.id != ?" : "") . "
             WHERE h.clase = ?
             ORDER BY h.numero
         ";
 
+        $params = [$fin, $ini];
+        if ($excluirId !== null) $params[] = $excluirId;
+        $params[] = $clase;
+
         $s = $pdo->prepare($sql);
-        $s->execute([$fin, $ini, $clase]);
+        $s->execute($params);
         return $s->fetchAll(PDO::FETCH_ASSOC);
     }
 }

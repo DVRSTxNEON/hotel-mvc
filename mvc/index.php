@@ -14,8 +14,10 @@ switch($action){
 
     case 'login':    (new UserController())->login();    break;
     case 'register': (new UserController())->register(); break;
+    case 'logout':   (new UserController())->logout();   break;
 
     case 'guardarReserva':  (new ReservaController())->guardar();      break;
+    case 'editarReserva':   (new ReservaController())->editar();       break;
     case 'listarReservas':  (new ReservaController())->listar();       break;
     case 'habitaciones':    (new ReservaController())->habitaciones(); break;
     case 'cancelarReserva': (new ReservaController())->cancelar();     break;

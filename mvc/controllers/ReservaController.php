@@ -38,12 +38,10 @@ class ReservaController {
             return $this->res("error", "Selecciona una habitación");
         }
 
-        // Validar formato de fechas
         if (!$this->validarFecha($fecha_inicio) || !$this->validarFecha($fecha_fin)) {
             return $this->res("error", "Formato de fecha inválido");
         }
 
-        // fecha_inicio debe ser hoy o futura
         if ($fecha_inicio < date('Y-m-d')) {
             return $this->res("error", "La fecha de inicio no puede ser en el pasado");
         }
@@ -54,12 +52,10 @@ class ReservaController {
 
         $model = new Reserva();
 
-        // Verificar que la habitación existe
         if (!$model->existeHabitacion($habitacion)) {
             return $this->res("error", "Habitación no encontrada");
         }
 
-        // Verificar disponibilidad
         if (!$model->estaDisponible($habitacion, $fecha_inicio, $fecha_fin)) {
             return $this->res("error", "La habitación no está disponible en esas fechas");
         }
@@ -72,6 +68,66 @@ class ReservaController {
         );
 
         return $this->res("ok", "Reserva creada exitosamente");
+    }
+
+    // ── EDITAR RESERVA ───────────────────────────────────────────────────────
+    public function editar() {
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            return $this->res("error", "Acceso inválido");
+        }
+
+        $this->requireSession();
+
+        if (!isset($_POST['id'], $_POST['habitacion'], $_POST['fecha_inicio'], $_POST['fecha_fin'])) {
+            return $this->res("error", "Faltan datos");
+        }
+
+        $id           = (int) $_POST['id'];
+        $habitacion   = trim($_POST['habitacion']);
+        $fecha_inicio = trim($_POST['fecha_inicio']);
+        $fecha_fin    = trim($_POST['fecha_fin']);
+
+        if ($id <= 0) {
+            return $this->res("error", "ID de reserva inválido");
+        }
+
+        if (empty($habitacion)) {
+            return $this->res("error", "Selecciona una habitación");
+        }
+
+        if (!$this->validarFecha($fecha_inicio) || !$this->validarFecha($fecha_fin)) {
+            return $this->res("error", "Formato de fecha inválido");
+        }
+
+        if ($fecha_inicio < date('Y-m-d')) {
+            return $this->res("error", "La fecha de inicio no puede ser en el pasado");
+        }
+
+        if ($fecha_inicio >= $fecha_fin) {
+            return $this->res("error", "La fecha de fin debe ser posterior a la de inicio");
+        }
+
+        $model = new Reserva();
+
+        // Verificar que la reserva pertenece al usuario
+        $reserva = $model->obtenerPorId($id, $_SESSION['user']['id']);
+        if (!$reserva) {
+            return $this->res("error", "Reserva no encontrada");
+        }
+
+        if (!$model->existeHabitacion($habitacion)) {
+            return $this->res("error", "Habitación no encontrada");
+        }
+
+        // Verificar disponibilidad excluyendo la reserva actual
+        if (!$model->estaDisponible($habitacion, $fecha_inicio, $fecha_fin, $id)) {
+            return $this->res("error", "La habitación no está disponible en esas fechas");
+        }
+
+        $model->actualizar($id, $_SESSION['user']['id'], $habitacion, $fecha_inicio, $fecha_fin);
+
+        return $this->res("ok", "Reserva actualizada exitosamente");
     }
 
     // ── LISTAR RESERVAS DEL USUARIO ──────────────────────────────────────────
@@ -92,7 +148,6 @@ class ReservaController {
         $id = (int) $_POST['id'];
         $model = new Reserva();
 
-        // Verificar que la reserva pertenece al usuario
         $reserva = $model->obtenerPorId($id, $_SESSION['user']['id']);
         if (!$reserva) {
             return $this->res("error", "Reserva no encontrada");
@@ -109,9 +164,10 @@ class ReservaController {
             return $this->res("error", "Faltan parámetros");
         }
 
-        $clase = trim($_GET['clase']);
-        $ini   = trim($_GET['inicio']);
-        $fin   = trim($_GET['fin']);
+        $clase      = trim($_GET['clase']);
+        $ini        = trim($_GET['inicio']);
+        $fin        = trim($_GET['fin']);
+        $excluirId  = isset($_GET['excluir']) ? (int) $_GET['excluir'] : null;
 
         $clasesValidas = ['estandar', 'suite', 'deluxe'];
         if (!in_array($clase, $clasesValidas)) {
@@ -126,7 +182,7 @@ class ReservaController {
             return $this->res("error", "La fecha de fin debe ser posterior a la de inicio");
         }
 
-        $data = (new Reserva())->estadoHabitaciones($clase, $ini, $fin);
+        $data = (new Reserva())->estadoHabitaciones($clase, $ini, $fin, $excluirId);
         echo json_encode($data);
         exit;
     }
@@ -149,7 +205,6 @@ class ReservaController {
         $id = (int) $_GET['id'];
         $model = new Reserva();
 
-        // Solo puede ver sus propias reservas
         $r = $model->obtenerPorId($id, $_SESSION['user']['id']);
 
         if (!$r) {
@@ -158,9 +213,8 @@ class ReservaController {
             exit;
         }
 
-        require_once "libs/fpdf/fpdf.php";
+        require_once __DIR__ . "/../libs/fpdf/fpdf.php";
 
-        // Calcular noches
         $inicio  = new DateTime($r['fecha_inicio']);
         $fin     = new DateTime($r['fecha_fin']);
         $noches  = $inicio->diff($fin)->days;
@@ -168,7 +222,6 @@ class ReservaController {
         $pdf = new FPDF();
         $pdf->AddPage();
 
-        // ── Encabezado ──────────────────────────────
         $pdf->SetFillColor(30, 58, 95);
         $pdf->SetTextColor(255, 255, 255);
         $pdf->SetFont('Arial', 'B', 20);
@@ -178,7 +231,6 @@ class ReservaController {
         $pdf->Cell(0, 8, 'Comprobante de Reserva', 0, 1, 'C', true);
         $pdf->Ln(6);
 
-        // ── Datos de la reserva ──────────────────────
         $pdf->SetTextColor(0, 0, 0);
         $pdf->SetFillColor(240, 244, 250);
         $pdf->SetFont('Arial', 'B', 12);
@@ -205,7 +257,6 @@ class ReservaController {
 
         $pdf->Ln(8);
 
-        // ── Pie ──────────────────────────────────────
         $pdf->SetFont('Arial', 'I', 9);
         $pdf->SetTextColor(120, 120, 120);
         $pdf->Cell(0, 8, 'Generado el ' . date('d/m/Y H:i') . ' - Hotel Luxury', 0, 1, 'C');
@@ -214,7 +265,7 @@ class ReservaController {
         exit;
     }
 
-    // ── EXCEL GENERAL ─────────────────────────────────────────────────────────
+    // ── EXCEL GENERAL (CSV) ───────────────────────────────────────────────────
     public function excelReservas() {
 
         if (!isset($_SESSION['user'])) {
@@ -223,37 +274,44 @@ class ReservaController {
             exit;
         }
 
-        $data = (new Reserva())->listar($_SESSION['user']['id']);
+        $data     = (new Reserva())->listar($_SESSION['user']['id']);
+        $nombre   = $_SESSION['user']['nombre'];
+        $cedula   = $_SESSION['user']['cedula'];
+        $filename = 'Reservas_' . date('Ymd_His') . '.csv';
 
-        header("Content-Type: application/vnd.ms-excel; charset=utf-8");
-        header("Content-Disposition: attachment; filename=Reservas_" . date('Ymd_His') . ".xls");
+        header("Content-Type: text/csv; charset=utf-8");
+        header("Content-Disposition: attachment; filename=\"$filename\"");
         header("Cache-Control: max-age=0");
 
-        // BOM para UTF-8
-        echo "\xEF\xBB\xBF";
+        $out = fopen('php://output', 'w');
+        fputs($out, "\xEF\xBB\xBF");
 
-        // Encabezado del reporte
-        echo "Hotel Luxury - Reporte de Reservas\t\t\t\n";
-        echo "Huésped:\t" . $_SESSION['user']['nombre'] . "\t\t\n";
-        echo "Cédula:\t"  . $_SESSION['user']['cedula']  . "\t\t\n";
-        echo "Generado:\t" . date('d/m/Y H:i') . "\t\t\n";
-        echo "\n";
+        $sep = ';';
 
-        // Cabecera de tabla
-        echo "# Reserva\tHabitación\tFecha Inicio\tFecha Fin\tNoches\n";
+        fputcsv($out, ['Hotel Luxury - Reporte de Reservas'], $sep);
+        fputcsv($out, ['Huesped:', $nombre], $sep);
+        fputcsv($out, ['Cedula:',  $cedula], $sep);
+        fputcsv($out, ['Generado:', date('d/m/Y H:i')], $sep);
+        fputcsv($out, [], $sep);
+
+        fputcsv($out, ['# Reserva', 'Habitacion', 'Fecha Inicio', 'Fecha Fin', 'Noches'], $sep);
 
         if (empty($data)) {
-            echo "Sin reservas registradas\t\t\t\t\n";
+            fputcsv($out, ['Sin reservas registradas'], $sep);
         } else {
             foreach ($data as $r) {
                 $noches = (new DateTime($r['fecha_inicio']))->diff(new DateTime($r['fecha_fin']))->days;
-                echo str_pad($r['id'], 5, '0', STR_PAD_LEFT) . "\t"
-                   . $r['habitacion']    . "\t"
-                   . $r['fecha_inicio']  . "\t"
-                   . $r['fecha_fin']     . "\t"
-                   . $noches            . "\n";
+                fputcsv($out, [
+                    '#' . str_pad($r['id'], 5, '0', STR_PAD_LEFT),
+                    $r['habitacion'],
+                    $r['fecha_inicio'],
+                    $r['fecha_fin'],
+                    $noches . ' noche(s)',
+                ], $sep);
             }
         }
+
+        fclose($out);
         exit;
     }
 
